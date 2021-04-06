@@ -13,4 +13,7 @@
     <color name="whiteBlueR">#11244A</color>
     <color name="creamR">#FFF9AC</color>
     <color name="grayR">#121212</color>
+    <color name="red">#C40202</color>
+    <color name="yellow">#DCE319</color>
+    <color name="green">#11D68E</color>
 </resources>
