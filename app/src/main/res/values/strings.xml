@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">Abastecido</string>
+    <string name="search">Buscar</string>
+    <string name="search_hint">Buscar...</string>
+    <string name="confirmar_orden">Confirmar Orden</string>
+    <string name="finalizar_orden">Finalizar Orden</string>
+    <string name="save_order">¿Desea finalizar y guardar la nueva orden?</string>
+    <string name="finalizate">Finalizar</string>
+    <string name="order_saved">Orden Guardada</string>
+    <string name="cancel">Cancelar</string>
+    <string name="edit">Editar</string>
+    <string name="save_changes">¿Desea guardar los cambios?</string>
+    <string name="save">Guardar Cambios</string>
+    <string name="modify_inv">Modificar Inventario</string>
+    <string name="inv">Inventario</string>
+    <string name="new_order">Nueva Orden</string>
 </resources>

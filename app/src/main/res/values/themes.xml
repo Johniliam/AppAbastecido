@@ -1,16 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Abastecido" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.Abastecido" parent="Theme.MaterialComponents.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/orangeR</item>
         <item name="colorPrimaryVariant">@color/whiteOrangeR</item>
         <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/creamR</item>
+        <item name="colorSecondary">@color/white</item>
         <item name="colorSecondaryVariant">@color/white</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
-        <!-- Customize your theme here. -->
+        <!-- SearchBox color.  -->
+        <item name="android:editTextColor">@android:color/white</item>
+        <item name="android:textColorHint">@android:color/white</item>
+        <!-- Basic Font -->
+        <item name="android:fontFamily">cursive</item>
+    </style>
+
+    <!-- ToolBar Apperance. -->
+    <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textColor">@color/black</item>
+        <item name="fontFamily">cursive</item>
     </style>
 </resources>
