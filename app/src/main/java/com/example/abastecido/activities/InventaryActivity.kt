@@ -55,6 +55,7 @@ class InventaryActivity : AppCompatActivity() {
             goToNewOrder()
         }
 
+        initRecycler()
         getListFiles()
     }
 
@@ -78,7 +79,6 @@ class InventaryActivity : AppCompatActivity() {
     //RecyclerView Initializer
     //cambiar al integrar api
     private fun initRecycler(){
-        articuloFiltered.addAll(articulosDB)
         binding.rvStorageList.layoutManager = LinearLayoutManager(this)
         val adapter = InventaryAdapter(articuloFiltered)
         binding.rvStorageList.adapter = adapter
@@ -91,12 +91,13 @@ class InventaryActivity : AppCompatActivity() {
             ref.addListenerForSingleValueEvent(
                     object : ValueEventListener {
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            val dataList = arrayListOf<String>()
                             for (dsp in dataSnapshot.children){
-                                dataList.add(dsp.value.toString())
-                                Log.e("Added Item", dsp.value.toString())
+                                val key = dsp.key
+                                val name = dsp.child("articuloNombre").value.toString()
+                                val image = dsp.child("imagen").value.toString()
+                                val stock = dsp.child("stock").value.toString().toInt()
+                                articulosDB.add(Articulo(name,stock,image))
                             }
-
                         }
 
                         override fun onCancelled(databaseError: DatabaseError) {
@@ -104,44 +105,13 @@ class InventaryActivity : AppCompatActivity() {
                         }
                     })
             withContext(Dispatchers.Main){
-                //articulosDB.clear()
-                //rticulosDB.addAll(imageUrl)
+                articuloFiltered.clear()
                 articuloFiltered.addAll(articulosDB)
 
-                binding.rvStorageList.apply {
-                    adapter = InventaryAdapter(articuloFiltered)
-                    layoutManager = LinearLayoutManager(this@InventaryActivity)
-                }
+                binding.rvStorageList.adapter?.notifyDataSetChanged()
+
             }
 
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@InventaryActivity, getString(R.string.imagesdbError), Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun listfiles() = CoroutineScope(Dispatchers.IO).launch {
-        try {
-
-            val images = imageRef.child("Fotos/").listAll().result
-            val imageUrl = mutableListOf<Articulo>()
-            if (images != null) {
-                for (image in images.items){
-                    val url = image.downloadUrl.result
-                    imageUrl.add(Articulo("TODO", 7, url.toString()))
-                }
-                withContext(Dispatchers.Main){
-                    articulosDB.clear()
-                    articulosDB.addAll(imageUrl)
-                    articuloFiltered.addAll(articulosDB)
-
-                    binding.rvStorageList.apply {
-                        adapter = InventaryAdapter(articuloFiltered)
-                        layoutManager = LinearLayoutManager(this@InventaryActivity)
-                    }
-                }
-            }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
                 Toast.makeText(this@InventaryActivity, getString(R.string.imagesdbError), Toast.LENGTH_LONG).show()
