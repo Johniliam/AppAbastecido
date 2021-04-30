@@ -2,29 +2,35 @@ package com.example.abastecido.activities
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.abastecido.R
 import com.example.abastecido.adapters.InventaryAdapter
 import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.ActivityInventaryBinding
-import com.example.abastecido.test
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.Exception
 import java.util.*
+
+
+enum class ProviderType{
+    BASIC
+}
 
 class InventaryActivity : AppCompatActivity() {
 
@@ -49,7 +55,7 @@ class InventaryActivity : AppCompatActivity() {
             goToNewOrder()
         }
 
-        listfiles()
+        getListFiles()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -65,7 +71,7 @@ class InventaryActivity : AppCompatActivity() {
     }
 
     private fun goToNewOrder(){
-        val intent = Intent(this, test::class.java)
+        val intent = Intent(this, NewOrderActivity::class.java)
         startActivity(intent)
     }
 
@@ -76,6 +82,43 @@ class InventaryActivity : AppCompatActivity() {
         binding.rvStorageList.layoutManager = LinearLayoutManager(this)
         val adapter = InventaryAdapter(articuloFiltered)
         binding.rvStorageList.adapter = adapter
+    }
+
+    private fun getListFiles() = CoroutineScope(Dispatchers.IO).launch {
+        try {
+
+            val ref = FirebaseDatabase.getInstance().reference.child("images")
+            ref.addListenerForSingleValueEvent(
+                    object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            val dataList = arrayListOf<String>()
+                            for (dsp in dataSnapshot.children){
+                                dataList.add(dsp.value.toString())
+                                Log.e("Added Item", dsp.value.toString())
+                            }
+
+                        }
+
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            //handle databaseError
+                        }
+                    })
+            withContext(Dispatchers.Main){
+                //articulosDB.clear()
+                //rticulosDB.addAll(imageUrl)
+                articuloFiltered.addAll(articulosDB)
+
+                binding.rvStorageList.apply {
+                    adapter = InventaryAdapter(articuloFiltered)
+                    layoutManager = LinearLayoutManager(this@InventaryActivity)
+                }
+            }
+
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(this@InventaryActivity, getString(R.string.imagesdbError), Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun listfiles() = CoroutineScope(Dispatchers.IO).launch {

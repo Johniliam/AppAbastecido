@@ -1,37 +1,31 @@
 package com.example.abastecido
 
 import android.app.Activity
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.provider.MediaStore.Images.Media.getBitmap
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.ActivityTestBinding
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import com.squareup.picasso.Picasso
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 class test : AppCompatActivity() {
 
     private lateinit var binding: ActivityTestBinding
 
-    private var imageReference: StorageReference? = null
+    private var imageReference = FirebaseStorage.getInstance().reference.child("images")
     private var fileRef: StorageReference? = null
 
     val dataReference = FirebaseDatabase.getInstance().getReference("images")
@@ -58,7 +52,12 @@ class test : AppCompatActivity() {
     }
 
     private fun showError(){
-        Toast.makeText(this, "Error al descargar la imagen", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun reloadActivity(){
+        finish()
+        startActivity(intent)
     }
 
     private fun startFileChooser(){
@@ -91,53 +90,61 @@ class test : AppCompatActivity() {
 
     private fun uploadFile() {
 
-        if (filepath != null) {
-            val fileName = binding.edtFileName.text.toString()
+        val fileName = binding.edtFileName.text.toString()
 
-            if (!validateInputFileName(fileName)) {
-                return
-            }
-
-            binding.tvFileLoad.visibility = View.VISIBLE
-
-            fileRef = imageReference!!.child(fileName + "." + getFileExtension(filepath!!))
-            fileRef!!.putFile(filepath!!)
-                .addOnSuccessListener { taskSnapshot ->
-                    val name = taskSnapshot.metadata!!.name
-                    val url = taskSnapshot.storage.downloadUrl.toString()
-
-                    Log.e(tag, "Uri: ${taskSnapshot.storage.downloadUrl}")
-                    Log.e(tag, "Name: ${taskSnapshot.metadata!!.name}")
-                    binding.tvFileLoad.text = "${taskSnapshot.metadata!!.path} - ${taskSnapshot.metadata!!.sizeBytes / 1024} KBs"
-
-                    writeNewImageInfoToDB(name!!, url)
-
-                    Toast.makeText(this, "File Uploaded ", Toast.LENGTH_LONG).show()
-                }
-                .addOnFailureListener { exception ->
-                    Toast.makeText(this, exception.message, Toast.LENGTH_LONG).show()
-                }
-                .addOnProgressListener { taskSnapshot ->
-                    // progress percentage
-                    val progress = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
-
-                    // percentage in progress
-                    val intProgress = progress.toInt()
-                    binding.tvFileLoad.text = "Uploaded $intProgress%..."
-                }
-                .addOnPausedListener { System.out.println("Upload is paused!") }
-
-        } else {
-            Toast.makeText(this, "No File!", Toast.LENGTH_LONG).show()
+        if (!validateInputFileName(fileName)) {
+            return
         }
+
+        binding.tvFileLoad.visibility = View.VISIBLE
+
+        fileRef = imageReference!!.child(fileName + "." + getFileExtension(filepath))
+        fileRef!!.putFile(filepath)
+            .addOnSuccessListener { taskSnapshot ->
+                val name = taskSnapshot.metadata!!.name?.substringBefore(".")
+                taskSnapshot.storage.downloadUrl.addOnSuccessListener(OnSuccessListener<Uri?> {
+                    if (it != null) {
+                        val uri = it
+
+                        Log.e(tag, "Url: $uri")
+                        Log.e(tag, "Name: ${taskSnapshot.metadata!!.name}")
+                        val meta = "${taskSnapshot.metadata!!.path} - ${taskSnapshot.metadata!!.sizeBytes / 1024} KBs"
+                        binding.tvFileLoad.text = meta
+
+                        writeNewImageInfoToDB(name!!, uri.toString())
+
+                        Toast.makeText(this, "File Uploaded ", Toast.LENGTH_LONG).show()
+
+                        reloadActivity()
+
+                    }else{
+                        showError()
+                        reloadActivity()
+                    }
+                })
+            }
+            .addOnFailureListener { exception ->
+                Toast.makeText(this, exception.message, Toast.LENGTH_LONG).show()
+            } //progress bar
+            .addOnProgressListener { taskSnapshot ->
+                // progress percentage
+                val progress = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
+
+                // percentage in progress
+                val intProgress = progress.toInt()
+                val prog = "Uploaded $intProgress%..."
+                binding.tvFileLoad.text = prog
+            }
+            .addOnPausedListener { System.out.println("Upload is paused!") }
+
     }
 
     private fun writeNewImageInfoToDB(name: String, url: String) {
         val info = Articulo(name, 0, url)
 
-        val key = dataReference!!.push().key
+        val key = dataReference.push().key
         if (key != null) {
-            dataReference!!.child(key).setValue(info)
+            dataReference.child(key).setValue(info)
         }
     }
 

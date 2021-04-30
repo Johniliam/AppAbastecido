@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Name" />
+        android:hint="Nombre de la imagen" />
 
     <ImageView
         android:id="@+id/ivDownload"
@@ -29,8 +29,7 @@
         android:layout_height="wrap_content"
         android:textSize="30dp"
         android:textStyle="bold"
-        android:fontFamily="serif"
-        android:text="TextView" />
+        android:fontFamily="serif"/>
 
     <LinearLayout
         android:layout_width="match_parent"
