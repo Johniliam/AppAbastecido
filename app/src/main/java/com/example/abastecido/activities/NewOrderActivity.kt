@@ -3,67 +3,99 @@ package com.example.abastecido.activities
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.hardware.input.InputManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Message
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView;
-import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.abastecido.R
 import com.example.abastecido.adapters.NewOrderAdapter
 import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.ActivityNewOrderBinding
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
-class NewOrderActivity : AppCompatActivity() {
+class NewOrderActivity() : AppCompatActivity(){
+
+    override fun onBackPressed() {
+        Log.d("CDA", "onBackPressed Called")
+        showCancelAlert()
+    }
 
     private lateinit var binding: ActivityNewOrderBinding
-    private val articuloFiltered = mutableListOf<Articulo>()
 
-    //borrar al integrar api
-    val articulosPrueba = mutableListOf(
-        Articulo("Aceite", 10, "https://image.freepik.com/foto-gratis/aceite-cocina-botella-plastico-blanco_35712-553.jpg"),
-        Articulo("Pan", 1, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Zanahoria", 12, "https://img.freepik.com/foto-gratis/zanahoria-entera-aislada_88281-1988.jpg?size=626&ext=jpg"),
-        Articulo("Pan", 13, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Aceite", 14, "https://image.freepik.com/foto-gratis/aceite-cocina-botella-plastico-blanco_35712-553.jpg"),
-        Articulo("Pan", 5, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Zanahoria", 16, "https://img.freepik.com/foto-gratis/zanahoria-entera-aislada_88281-1988.jpg?size=626&ext=jpg"),
-        Articulo("Aceite", 7, "https://image.freepik.com/foto-gratis/aceite-cocina-botella-plastico-blanco_35712-553.jpg"),
-        Articulo("Pan", 8, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Zanahoria", 9, "https://img.freepik.com/foto-gratis/zanahoria-entera-aislada_88281-1988.jpg?size=626&ext=jpg"),
-        Articulo("Pan", 10, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Aceite", 11, "https://image.freepik.com/foto-gratis/aceite-cocina-botella-plastico-blanco_35712-553.jpg"),
-        Articulo("Pan", 2, "https://zainduzaitez.com/wp-content/uploads/2013/11/pan_de_molde2.jpg"),
-        Articulo("Zanahoria", 13, "https://img.freepik.com/foto-gratis/zanahoria-entera-aislada_88281-1988.jpg?size=626&ext=jpg")
-    )
+    private lateinit var adapter: NewOrderAdapter
+
+    private val articuloFiltered = mutableListOf<Articulo>()
+    val articulosDB = mutableListOf<Articulo>()
+
+    val dataReference = FirebaseDatabase.getInstance().getReference("images")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNewOrderBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        title = getString(R.string.new_order)
+
         setSupportActionBar(binding.toolbar)
 
         initRecycler()
-        title = getString(R.string.new_order)
-
-
+        getListFiles()
     }
 
     //RecyclerView Initializer
     fun initRecycler(){
-        articuloFiltered.addAll(articulosPrueba)
         binding.rvStorageList.layoutManager = LinearLayoutManager(this)
-        val adapter = NewOrderAdapter(articuloFiltered)
+        adapter = NewOrderAdapter(articuloFiltered)
         binding.rvStorageList.adapter = adapter
+    }
+
+    private fun getListFiles() = CoroutineScope(Dispatchers.IO).launch {
+        val ref = FirebaseDatabase.getInstance().reference.child("images")
+        ref.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        for (dsp in dataSnapshot.children){
+                            val key = dsp.key.toString()
+                            val name = dsp.child("articuloNombre").value.toString()
+                            val image = dsp.child("imagen").value.toString()
+                            val stock = dsp.child("stock").value.toString()
+                            if (stock != ""){
+                                articulosDB.add(Articulo(key,name.replace("_", "\n"),stock.toInt(),image))
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        //handle databaseError
+                        Toast.makeText(this@NewOrderActivity, "Error in data download", Toast.LENGTH_SHORT).show()
+                    }
+                })
+        delay(1000)
+        runOnUiThread {
+            articuloFiltered.addAll(articulosDB)
+
+            binding.rvStorageList.adapter?.notifyDataSetChanged()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -86,7 +118,7 @@ class NewOrderActivity : AppCompatActivity() {
 
                         articuloFiltered.clear()
                         val search = newText.toLowerCase(Locale.getDefault())
-                        articulosPrueba.forEach{
+                        articulosDB.forEach{
                             if (it.articuloNombre.toLowerCase(Locale.getDefault()).contains(search.toLowerCase(Locale.getDefault()))) {
                                 articuloFiltered.add(it)
                             }
@@ -95,7 +127,7 @@ class NewOrderActivity : AppCompatActivity() {
                     }
                     else{
                         articuloFiltered.clear()
-                        articuloFiltered.addAll(articulosPrueba)
+                        articuloFiltered.addAll(articulosDB)
                         binding.rvStorageList.adapter!!.notifyDataSetChanged()
                     }
                     return true
@@ -124,7 +156,7 @@ class NewOrderActivity : AppCompatActivity() {
                 .setNegativeButton(getString(R.string.cancel), DialogInterface.OnClickListener{
                     dialog, id -> dialog.cancel()
                 })
-                .setPositiveButton(getString(R.string.finalizate), DialogInterface.OnClickListener{
+                .setPositiveButton(getString(R.string.acept), DialogInterface.OnClickListener{
                     //save order in firebase
                     dialog, id -> run {
 
@@ -138,9 +170,35 @@ class NewOrderActivity : AppCompatActivity() {
         alert.show()
     }
 
+    private fun showCancelAlert(){
+        val dialogBuilder = AlertDialog.Builder(this)
+        dialogBuilder.setMessage("¿Desea cancelar la nueva orden?\nTodos los cambios se perderán")
+                .setNegativeButton(getString(R.string.cancel), DialogInterface.OnClickListener{
+                    dialog, id -> dialog.cancel()
+                })
+                .setPositiveButton(getString(R.string.acept), DialogInterface.OnClickListener{
+                    dialog, id -> run {
+                    undoDB()
+                    goToInventary()
+                }
+                })
+        val alert = dialogBuilder.create()
+        alert.setTitle(getString(R.string.finalizar_orden))
+        alert.show()
+    }
+
+    private fun undoDB(){
+
+        for (info in articulosDB){
+
+            dataReference.child(info.key).child("stock").setValue(info.stock)
+
+        }
+    }
+
     private fun goToInventary(){
         val intent = Intent(this, InventaryActivity::class.java)
         startActivity(intent)
     }
-    
+
 }

@@ -21,10 +21,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.*
 
 
@@ -35,11 +32,8 @@ enum class ProviderType{
 class InventaryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityInventaryBinding
+
     private val articuloFiltered = mutableListOf<Articulo>()
-
-    val imageRef = FirebaseStorage.getInstance().reference
-
-    //borrar al integrar api
     val articulosDB = mutableListOf<Articulo>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,37 +79,32 @@ class InventaryActivity : AppCompatActivity() {
     }
 
     private fun getListFiles() = CoroutineScope(Dispatchers.IO).launch {
-        try {
-
-            val ref = FirebaseDatabase.getInstance().reference.child("images")
-            ref.addListenerForSingleValueEvent(
-                    object : ValueEventListener {
-                        override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            for (dsp in dataSnapshot.children){
-                                val key = dsp.key
-                                val name = dsp.child("articuloNombre").value.toString()
-                                val image = dsp.child("imagen").value.toString()
-                                val stock = dsp.child("stock").value.toString().toInt()
-                                articulosDB.add(Articulo(name,stock,image))
+        val ref = FirebaseDatabase.getInstance().reference.child("images")
+        ref.addListenerForSingleValueEvent(
+                object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        for (dsp in dataSnapshot.children){
+                            val key = dsp.key.toString()
+                            val name = dsp.child("articuloNombre").value.toString()
+                            val image = dsp.child("imagen").value.toString()
+                            val stock = dsp.child("stock").value.toString()
+                            if (stock != ""){
+                                articulosDB.add(Articulo(key,name.replace("_", "\n"),stock.toInt(),image))
                             }
                         }
+                    }
 
-                        override fun onCancelled(databaseError: DatabaseError) {
-                            //handle databaseError
-                        }
-                    })
-            withContext(Dispatchers.Main){
-                articuloFiltered.clear()
-                articuloFiltered.addAll(articulosDB)
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        //handle databaseError
+                        Toast.makeText(this@InventaryActivity, "Error in data download", Toast.LENGTH_SHORT).show()
+                    }
+                })
+        delay(1000)
+        runOnUiThread {
+            articuloFiltered.addAll(articulosDB)
 
-                binding.rvStorageList.adapter?.notifyDataSetChanged()
-
-            }
-
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@InventaryActivity, getString(R.string.imagesdbError), Toast.LENGTH_LONG).show()
-            }
+            binding.rvStorageList.adapter?.notifyDataSetChanged()
+            Log.e("data added", articuloFiltered.toString())
         }
     }
 

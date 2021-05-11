@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.abastecido.R
 import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.OrderItemArticuloBinding
+import com.google.firebase.database.FirebaseDatabase
 import com.squareup.picasso.Picasso
 
 class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.Adapter<ModifyInventaryAdapter.ArticuloHolder>(){
@@ -29,6 +30,8 @@ class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.
 
     class ArticuloHolder(val view: View):RecyclerView.ViewHolder(view){
         val binding = OrderItemArticuloBinding.bind(view)
+
+        val dataReference = FirebaseDatabase.getInstance().getReference("images")
 
         fun render(articulo: Articulo){
             binding.tvArticuloName.text = articulo.articuloNombre
@@ -52,8 +55,19 @@ class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.
             }
 
             Picasso.get().load(articulo.imagen).into(binding.ivArticulo)
-            view.setOnClickListener { Toast.makeText(view.context, "Has seleccionado a ${articulo.articuloNombre}", Toast.LENGTH_SHORT).show() }
 
+            view.setOnClickListener {
+                if (binding.tvStock.text.toString() != ""){
+                    saveDB(articulo.key,binding.tvStock.text.toString().toInt())
+                }
+            }
+
+        }
+
+        fun saveDB(key: String, stock: Int){
+            dataReference.child(key).child("stock").setValue(stock)
+            binding.tvStock.background.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(view.context, R.color.white), PorterDuff.Mode.SRC)
+            binding.tvStock.isClickable = false
         }
 
     }

@@ -3,6 +3,7 @@ package com.example.abastecido.adapters
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -59,7 +60,8 @@ class InventaryAdapter (val articulo: List<Articulo>):RecyclerView.Adapter<Inven
             }
 
             Picasso.get().load(articulo.imagen).into(binding.ivArticulo)
-            view.setOnClickListener { Toast.makeText(view.context, "Has seleccionado a ${articulo.articuloNombre}", Toast.LENGTH_SHORT).show() }
+            view.setOnClickListener { Log.e("click", articulo.articuloNombre) }
+            //view.setOnClickListener { Toast.makeText(view.context, "Has seleccionado a ${articulo.articuloNombre}", Toast.LENGTH_SHORT).show() }
         }
     }
 

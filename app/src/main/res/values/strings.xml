@@ -26,4 +26,5 @@
     <string name="login_failed">"Login failed"</string>
     <string name="password">Contraseña</string>
     <string name="confirm">Confirmar</string>
+    <string name="acept">Aceptar</string>
 </resources>

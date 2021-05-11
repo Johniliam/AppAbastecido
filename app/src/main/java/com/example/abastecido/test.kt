@@ -140,12 +140,11 @@ class test : AppCompatActivity() {
     }
 
     private fun writeNewImageInfoToDB(name: String, url: String) {
-        val info = Articulo(name, 0, url)
+        val key = dataReference.push().key.toString()
 
-        val key = dataReference.push().key
-        if (key != null) {
-            dataReference.child(key).setValue(info)
-        }
+        val info = Articulo(key, name, 0, url)
+
+        dataReference.child(key).setValue(info)
     }
 
     private fun getFileExtension(uri: Uri): String? {
