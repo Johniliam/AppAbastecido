@@ -1,31 +1,24 @@
 package com.example.abastecido.adapters
 
-import android.app.AlertDialog
-import android.content.DialogInterface
-import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
-import android.util.Log
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.EditText
-import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
-import androidx.core.content.contentValuesOf
-import androidx.core.widget.doAfterTextChanged
-import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.example.abastecido.R
-import com.example.abastecido.activities.InventaryActivity
 import com.example.abastecido.activities.NewOrderActivity
 import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.OrderItemArticuloBinding
 import com.google.firebase.database.FirebaseDatabase
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import com.squareup.picasso.Picasso
+import java.util.*
 
 class NewOrderAdapter (private val articulo: MutableList<Articulo>):RecyclerView.Adapter<NewOrderAdapter.ArticuloHolder>(){
 
@@ -36,6 +29,7 @@ class NewOrderAdapter (private val articulo: MutableList<Articulo>):RecyclerView
 
     override fun getItemCount(): Int = articulo.size
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: ArticuloHolder, position: Int) {
         holder.render(articulo[position], position)
     }
@@ -45,6 +39,7 @@ class NewOrderAdapter (private val articulo: MutableList<Articulo>):RecyclerView
 
         val dataReference = FirebaseDatabase.getInstance().getReference("images")
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun render(articulo: Articulo, pos: Int){
             binding.tvArticuloName.text = articulo.articuloNombre
             
@@ -63,8 +58,12 @@ class NewOrderAdapter (private val articulo: MutableList<Articulo>):RecyclerView
 
         }
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun saveDB(key: String, stock: Int){
             dataReference.child(key).child("stock").setValue(stock)
+            val currentDateTime = LocalDateTime.now()
+            val time = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            dataReference.child(key).child("updated_at").setValue(time)
             binding.tvStock.background.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(view.context, R.color.white), PorterDuff.Mode.SRC)
             binding.tvStock.isClickable = false
         }

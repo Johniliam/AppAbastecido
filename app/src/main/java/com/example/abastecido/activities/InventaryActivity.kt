@@ -88,8 +88,9 @@ class InventaryActivity : AppCompatActivity() {
                             val name = dsp.child("articuloNombre").value.toString()
                             val image = dsp.child("imagen").value.toString()
                             val stock = dsp.child("stock").value.toString()
+                            val updated = dsp.child("updated_at").value.toString()
                             if (stock != ""){
-                                articulosDB.add(Articulo(key,name.replace("_", "\n"),stock.toInt(),image))
+                                articulosDB.add(Articulo(key,name.replace("_", "\n"),stock.toInt(),image, updated))
                             }
                         }
                     }

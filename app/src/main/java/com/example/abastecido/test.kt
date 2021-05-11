@@ -142,7 +142,7 @@ class test : AppCompatActivity() {
     private fun writeNewImageInfoToDB(name: String, url: String) {
         val key = dataReference.push().key.toString()
 
-        val info = Articulo(key, name, 0, url)
+        val info = Articulo(key, name, 0, url,"")
 
         dataReference.child(key).setValue(info)
     }

@@ -27,7 +27,7 @@
         android:layout_marginTop="25dp"
         android:fontFamily="serif"
         android:inputType="textPersonName"
-        android:text="johny@gmail.com"
+        android:text="rrosario@gmail.com"
         android:hint="@string/prompt_email"/>
 
     <EditText
@@ -42,7 +42,7 @@
         android:fontFamily="serif"
         android:layout_marginTop="25dp"
         android:hint="@string/password"
-        android:text="contra123"
+        android:text="testpassword"
         android:inputType="textPassword" />
 
     <Button

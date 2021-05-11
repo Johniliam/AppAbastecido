@@ -3,10 +3,12 @@ package com.example.abastecido.adapters
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.abastecido.R
@@ -14,6 +16,8 @@ import com.example.abastecido.data_class.Articulo
 import com.example.abastecido.databinding.OrderItemArticuloBinding
 import com.google.firebase.database.FirebaseDatabase
 import com.squareup.picasso.Picasso
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.Adapter<ModifyInventaryAdapter.ArticuloHolder>(){
 
@@ -24,6 +28,7 @@ class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.
 
     override fun getItemCount(): Int = articulo.size
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: ArticuloHolder, position: Int) {
         holder.render(articulo[position])
     }
@@ -33,6 +38,7 @@ class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.
 
         val dataReference = FirebaseDatabase.getInstance().getReference("images")
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun render(articulo: Articulo){
             binding.tvArticuloName.text = articulo.articuloNombre
 
@@ -64,8 +70,12 @@ class ModifyInventaryAdapter (val articulo: MutableList<Articulo>):RecyclerView.
 
         }
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun saveDB(key: String, stock: Int){
             dataReference.child(key).child("stock").setValue(stock)
+            val currentDateTime = LocalDateTime.now()
+            val time = currentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            dataReference.child(key).child("updated_at").setValue(time)
             binding.tvStock.background.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(view.context, R.color.white), PorterDuff.Mode.SRC)
             binding.tvStock.isClickable = false
         }
